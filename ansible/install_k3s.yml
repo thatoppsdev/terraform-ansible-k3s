@@ -1,0 +1,17 @@
+- hosts: localhost
+  become: true
+  tasks:
+    - name: Update packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install curl
+      yum:
+        name: curl
+        state: present
+
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | sh
+      args:
+        creates: /usr/local/bin/k3s
