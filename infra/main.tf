@@ -8,6 +8,15 @@ resource "aws_security_group" "portfolio_sg" {
   description = "Allow HTTP and Node backend traffic"
 
   ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] 
+  }
+
+  ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -15,6 +24,7 @@ resource "aws_security_group" "portfolio_sg" {
   }
 
   ingress {
+    description = "Node backend"
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
@@ -39,22 +49,12 @@ resource "aws_instance" "portfolio" {
 
   provisioner "remote-exec" {
     inline = [
-      # Update packages
-      "sudo yum update -y",
+    # Clone repo (if not already)
+    "git clone https://github.com/thatoppsdev/terraform-ansible-k3s.git ~/portfolio || true",
 
-      # Install dependencies
-      "sudo amazon-linux-extras install epel -y",
-      "sudo yum install python3-pip git -y",
-
-      # Install Ansible on EC2
-      "sudo pip3 install ansible",
-
-      # Clone your repo (contains k8s manifests)
-      "git clone https://github.com/thatoppsdev/terraform-ansible-k3s.git ~/portfolio",
-
-      # Run Ansible playbooks from EC2
-      "cd ~/portfolio/infra && ansible-playbook ../ansible/install_k3s.yml -c local",
-      "cd ~/portfolio/infra && ansible-playbook ../ansible/deploy_k8s.yml -c local"
+    # Run Ansible playbooks
+    "ansible-playbook ~/portfolio/ansible/install_k3s.yml -c local",
+    "ansible-playbook ~/portfolio/ansible/deploy_k8s.yml -c local"
     ]
 
     connection {
@@ -62,6 +62,7 @@ resource "aws_instance" "portfolio" {
       user        = "ec2-user"
       private_key = file("${path.module}/terra.pem")
       host        = self.public_ip
+      timeout     = "15m"
     }
   }
 }
