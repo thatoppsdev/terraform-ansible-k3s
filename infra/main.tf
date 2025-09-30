@@ -31,11 +31,11 @@ resource "aws_security_group" "portfolio_sg" {
 
 # EC2 Instance
 resource "aws_instance" "portfolio" {
-  ami           = "ami-0c02fb55956c7d316" # Amazon Linux 2
-  instance_type = "t3.micro"
-  key_name      = "my-key"
+  ami                    = "ami-0c02fb55956c7d316" # Amazon Linux 2
+  instance_type          = "t3.micro"
+  key_name               = "terra"
   vpc_security_group_ids = [aws_security_group.portfolio_sg.id]
-  tags = { Name = "PortfolioServer" }
+  tags                   = { Name = "PortfolioServer" }
 
   provisioner "remote-exec" {
     inline = [
@@ -60,7 +60,7 @@ resource "aws_instance" "portfolio" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("~/.ssh/my-key.pem")
+      private_key = file("${path.module}/terra.pem")
       host        = self.public_ip
     }
   }
